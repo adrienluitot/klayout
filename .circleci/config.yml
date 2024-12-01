@@ -1,57 +1,25 @@
-# This config was automatically generated from your source code
-# Stacks detected: cicd:github-actions:.github/workflows,cicd:jenkins:.,deps:python:.,file:setup.py:.
 version: 2.1
-orbs:
-  python: circleci/python@2
+
 jobs:
-  test-python:
-    # Install dependencies and run tests
-    docker:
-      - image: cimg/python:3.8-node
+  build_arm64:
+    machine:
+      image: ubuntu-2204:current
+      resource_class: arm.medium
     steps:
       - checkout
-      - python/install-packages:
-          pkg-manager: pip-dist
+      - attach_workspace:
+          at: .
       - run:
-          name: Run tests
-          command: pytest --junitxml=junit.xml || ((($? == 5)) && echo 'Did not find any tests to run.')
-      - store_test_results:
-          path: junit.xml
-  build-package:
-    # build python package
-    docker:
-      - image: cimg/python:3.8-node
-    steps:
-      - checkout
-      - run:
-          name: Create the ~/artifacts directory if it doesn't exist
-          command: mkdir -p ~/artifacts
-      - python/dist
-      - store_artifacts:
-          path: dist
-          destination: ~/artifacts
-  deploy:
-    # This is an example deploy job, not actually used by the workflow
-    docker:
-      - image: cimg/base:stable
-    steps:
-      # Replace this with steps to deploy to users
-      - run:
-          name: deploy
-          command: '#e.g. ./deploy.sh'
-      - run:
-          name: found jenkins config
-          command: ':'
-      - run:
-          name: found github actions config
-          command: ':'
+          name: Getting dependencies
+          command: sudo apt install ruby ruby-dev python3 python3-dev libz-dev libgit2-dev qtbase5-dev qttools5-dev libqt5xmlpatterns5-dev qtmultimedia5-dev libqt5multimediawidgets5 libqt5svg5-dev
+      - run: 
+          name: Build
+          command: ./build.sh
+      # - run:
+      #     name: Run tests
+      #     command: TODO
+
 workflows:
-  build-and-test:
+  openvaf_workflow:
     jobs:
-      - test-python
-      - build-package:
-          requires:
-            - test-python
-    # - deploy:
-    #     requires:
-    #       - build-package
+      - build_arm64
